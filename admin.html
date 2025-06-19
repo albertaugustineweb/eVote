@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin – eVote</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    #resultsContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+    .candidate-card {
+      width: 250px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .candidate-card img {
+      width: 100%;
+      border-radius: 6px;
+      height: 200px;
+      object-fit: cover;
+    }
+    footer {
+      margin-top: 50px;
+      text-align: center;
+      font-size: 14px;
+      color: gray;
+    }
+    footer i {
+      font-size: 20px;
+      margin: 5px;
+      color: #444;
+      transition: 0.3s;
+    }
+    footer i:hover {
+      color: #32cbf1;
+    }
+    .reset-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #e53935;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>📊 Admin Dashboard – Voting Results</h2>
+
+  <div style="text-align: center; margin-bottom: 20px;">
+    <button onclick="activateVoting()">✅ Allow Next Voter</button>
+  </div>
+
+  <div id="resultsContainer"></div>
+
+  <footer>
+    Developed by Lindro App Studio Pvt Ltd<br>
+    <a href="https://www.instagram.com/lindrotech/" target="_blank"><i class="fab fa-instagram"></i></a>
+    <a href="https://wa.me/918289829101" target="_blank"><i class="fab fa-whatsapp"></i></a>
+  </footer>
+
+  <button class="reset-button" onclick="confirmReset()">Reset All Votes</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCqfN1_1HT6_BO0zTDtv6PZPOPimwLzjGQ",
+      authDomain: "collegevotingsystem-8b89f.firebaseapp.com",
+      databaseURL: "https://collegevotingsystem-8b89f-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "collegevotingsystem-8b89f",
+      storageBucket: "collegevotingsystem-8b89f.appspot.com",
+      messagingSenderId: "546434080143",
+      appId: "1:546434080143:web:962cbca57be4fd7a4f7ffa",
+      measurementId: "G-VBMX35BHER"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const candidates = [
+      {
+        name: "Priya Sharma",
+        class: "Grade 10 - B",
+        image: "images/priya.jpg"
+      },
+      {
+        name: "Aman Patel",
+        class: "Grade 10 - A",
+        image: "images/aman.jpg"
+      },
+      {
+        name: "Rahul Singh",
+        class: "Grade 10 - C",
+        image: "images/rahul.webp"
+      }
+    ];
+
+    function loadResults() {
+      const container = document.getElementById("resultsContainer");
+      container.innerHTML = "";
+
+      onValue(ref(db, 'votes'), (snapshot) => {
+        container.innerHTML = "";
+        candidates.forEach(candidate => {
+          const voteCount = snapshot.val()?.[candidate.name] || 0;
+          const card = document.createElement("div");
+          card.className = "candidate-card";
+          card.innerHTML = `
+            <img src="${candidate.image}" alt="${candidate.name}">
+            <h3>${candidate.name}</h3>
+            <p><strong>Class:</strong> ${candidate.class}</p>
+            <p><strong>Total Votes:</strong> ${voteCount}</p>
+          `;
+          container.appendChild(card);
+        });
+      });
+    }
+
+    window.activateVoting = () => {
+      set(ref(db, 'votingStatus/active'), true);
+    };
+
+    window.confirmReset = () => {
+      if (confirm("⚠️ Are you sure you want to reset all votes? This cannot be undone.")) {
+        remove(ref(db, 'votes'));
+      }
+    };
+
+    loadResults();
+  </script>
+</body>
+</html>

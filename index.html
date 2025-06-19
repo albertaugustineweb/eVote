@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>eVote Student Panel</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    #candidatesContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+    .candidate-card {
+      width: 250px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .candidate-card img {
+      width: 100%;
+      border-radius: 6px;
+      height: 200px;
+      object-fit: cover;
+    }
+    .vote-btn {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background-color: #32cbf1;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    footer {
+      margin-top: 50px;
+      text-align: center;
+      font-size: 14px;
+      color: gray;
+    }
+    footer i {
+      font-size: 20px;
+      margin: 5px;
+      color: #444;
+      transition: 0.3s;
+    }
+    footer i:hover {
+      color: #32cbf1;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center">🗳️ Student Voting Page</h2>
+  <div id="status" style="text-align:center; margin: 10px 0;"></div>
+  <div id="candidatesContainer"></div>
+
+  <!-- Voting Beep Audio -->
+  <audio id="beep-sound" src="beep.mp3" preload="auto"></audio>
+
+  <footer>
+    Developed by Lindro App Studio Pvt Ltd<br>
+    <a href="https://www.instagram.com/lindrotech/" target="_blank"><i class="fab fa-instagram"></i></a>
+    <a href="https://wa.me/918289829101" target="_blank"><i class="fab fa-whatsapp"></i></a>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCqfN1_1HT6_BO0zTDtv6PZPOPimwLzjGQ",
+      authDomain: "collegevotingsystem-8b89f.firebaseapp.com",
+      databaseURL: "https://collegevotingsystem-8b89f-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "collegevotingsystem-8b89f",
+      storageBucket: "collegevotingsystem-8b89f.appspot.com",
+      messagingSenderId: "546434080143",
+      appId: "1:546434080143:web:962cbca57be4fd7a4f7ffa",
+      measurementId: "G-VBMX35BHER"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const beep = document.getElementById("beep-sound");
+
+    const candidates = [
+      { name: "Priya Sharma", class: "Grade 10 - B", image: "images/priya.jpg" },
+      { name: "Aman Patel", class: "Grade 10 - A", image: "images/aman.jpg" },
+      { name: "Rahul Singh", class: "Grade 10 - C", image: "images/rahul.webp" }
+    ];
+
+    function renderCandidates(active) {
+      const container = document.getElementById("candidatesContainer");
+      container.innerHTML = "";
+      candidates.forEach(candidate => {
+        const card = document.createElement("div");
+        card.className = "candidate-card";
+        card.innerHTML = `
+          <img src="${candidate.image}" alt="${candidate.name}">
+          <h3>${candidate.name}</h3>
+          <p><strong>Class:</strong> ${candidate.class}</p>
+          <button class="vote-btn" ${!active ? "disabled" : ""} onclick="vote('${candidate.name}')">Vote</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    window.vote = async function(name) {
+  const voteRef = ref(db, `votes/${name}`);
+  onValue(voteRef, (snapshot) => {
+    const current = snapshot.val() || 0;
+    set(voteRef, current + 1);
+    set(ref(db, 'votingStatus/active'), false);
+
+    // Play and stop beep after 0.8s
+    beep.currentTime = 0;   // Start from beginning
+    beep.play();
+    setTimeout(() => {
+      beep.pause();
+      beep.currentTime = 0; // Reset so it can be replayed next time
+    }, 800); // Stop after 800 milliseconds
+
+    document.getElementById("status").innerText = "✅ Vote submitted successfully.";
+  }, { onlyOnce: true });
+}
+
+    onValue(ref(db, 'votingStatus/active'), (snapshot) => {
+      const active = snapshot.val();
+      renderCandidates(active);
+      document.getElementById("status").innerText = active ? "Voting is OPEN" : "Voting is CLOSED";
+    });
+  </script>
+</body>
+</html>
